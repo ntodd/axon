@@ -969,7 +969,7 @@ defmodule Axon.Shape do
               " got #{inspect(shape)}"
     end
 
-    {elem(shape, 0), 1, units}
+    {elem(shape, 0), units}
   end
 
   defp tuple_or_duplicate(key, tuple_or_integer, rank) do
