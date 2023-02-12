@@ -360,7 +360,7 @@ defmodule Axon.LoopTest do
       Axon.input("input", shape: {nil, 1})
       |> Axon.dense(1)
       |> Loop.trainer(:binary_cross_entropy, :sgd, log: 0)
-      |> Loop.handle(
+      |> Loop.handle_event(
         :epoch_completed,
         fn %State{step_state: pstate} = state ->
           {
@@ -376,7 +376,7 @@ defmodule Axon.LoopTest do
           }
         end
       )
-      |> Loop.handle(
+      |> Loop.handle_event(
         :completed,
         fn %State{step_state: %{counter: counter}} = state ->
           assert 4 = counter
@@ -396,7 +396,7 @@ defmodule Axon.LoopTest do
       Axon.input("input", shape: {nil, 1})
       |> Axon.dense(1)
       |> Loop.trainer(:binary_cross_entropy, :sgd, log: 0)
-      |> Loop.handle(
+      |> Loop.handle_event(
         :epoch_completed,
         fn %State{step_state: pstate} = state ->
           {
@@ -416,7 +416,7 @@ defmodule Axon.LoopTest do
           }
         end
       )
-      |> Loop.handle(
+      |> Loop.handle_event(
         :completed,
         fn %State{step_state: %{counter: counter}} = state ->
           assert {{4}, 4} = counter
@@ -477,7 +477,7 @@ defmodule Axon.LoopTest do
     end
 
     def send_handler(loop, event) do
-      Axon.Loop.handle(loop, event, fn state ->
+      Axon.Loop.handle_event(loop, event, fn state ->
         send(self(), event)
         {:continue, state}
       end)
@@ -562,7 +562,7 @@ defmodule Axon.LoopTest do
       ExUnit.CaptureIO.capture_io(fn ->
         model
         |> Axon.Loop.trainer(:binary_cross_entropy, :sgd)
-        |> Axon.Loop.handle(:iteration_completed, fn state ->
+        |> Axon.Loop.handle_event(:iteration_completed, fn state ->
           {:halt_epoch, state}
         end)
         |> send_handler(:epoch_halted)
@@ -589,7 +589,7 @@ defmodule Axon.LoopTest do
       ExUnit.CaptureIO.capture_io(fn ->
         model
         |> Axon.Loop.trainer(:binary_cross_entropy, :sgd)
-        |> Axon.Loop.handle(:iteration_completed, fn state ->
+        |> Axon.Loop.handle_event(:iteration_completed, fn state ->
           {:halt_loop, state}
         end)
         |> send_handler(:halted)
@@ -651,7 +651,7 @@ defmodule Axon.LoopTest do
     end
 
     def send_handler(loop, event, filter) do
-      Axon.Loop.handle(
+      Axon.Loop.handle_event(
         loop,
         event,
         fn state ->
@@ -863,7 +863,7 @@ defmodule Axon.LoopTest do
         model
         |> Axon.Loop.trainer(:binary_cross_entropy, :sgd)
         |> Axon.Loop.from_state(state1)
-        |> Axon.Loop.handle(:epoch_completed, fn %{epoch: epoch} = state ->
+        |> Axon.Loop.handle_event(:epoch_completed, fn %{epoch: epoch} = state ->
           assert epoch >= 3
           {:continue, state}
         end)
@@ -888,7 +888,7 @@ defmodule Axon.LoopTest do
         |> Axon.Loop.trainer(:binary_cross_entropy, :sgd)
         |> Axon.Loop.metric(:accuracy)
         |> Axon.Loop.validate(model, Enum.take(data, 5))
-        |> Axon.Loop.handle(
+        |> Axon.Loop.handle_event(
           :epoch_completed,
           fn %{metrics: metrics} = state ->
             assert Map.has_key?(metrics, "validation_accuracy")
@@ -918,7 +918,7 @@ defmodule Axon.LoopTest do
         |> Axon.Loop.metric(:accuracy)
         |> Axon.Loop.validate(model, Enum.take(data, 5))
         |> Axon.Loop.early_stop("validation_accuracy", mode: :max)
-        |> Axon.Loop.handle(
+        |> Axon.Loop.handle_event(
           :epoch_completed,
           fn %{handler_metadata: meta} = state ->
             assert %{early_stop: %{"validation_accuracy" => _, :since_last_improvement => _}} =
@@ -1006,7 +1006,7 @@ defmodule Axon.LoopTest do
         |> Axon.Loop.metric(:accuracy)
         |> Axon.Loop.validate(model, Enum.take(data, 5))
         |> Axon.Loop.reduce_lr_on_plateau("validation_accuracy", mode: :max)
-        |> Axon.Loop.handle(
+        |> Axon.Loop.handle_event(
           :epoch_completed,
           fn %{handler_metadata: meta} = state ->
             assert %{reduce_lr: %{"validation_accuracy" => _, :since_last_improvement => _}} =
